@@ -1,0 +1,90 @@
+@model BusinessObjects.Entities.NewsArticle
+@{
+    ViewData["Title"] = Model.Headline;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="mb-3">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to News Feed
+            </a>
+        </div>
+
+        <article class="card card-modern p-4 p-md-5">
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                <span class="badge bg-primary text-white rounded-pill px-3 py-1">
+                    <i class="bi bi-folder me-1"></i> @(Model.Category?.CategoryName ?? "General News")
+                </span>
+                @if (Model.NewsStatus == true)
+                {
+                    <span class="badge-status-active"><i class="bi bi-check-circle me-1"></i> Active</span>
+                }
+                else
+                {
+                    <span class="badge-status-inactive"><i class="bi bi-pause-circle me-1"></i> Inactive</span>
+                }
+            </div>
+
+            <h1 class="display-6 fw-bold mb-3">@Model.Headline</h1>
+
+            @if (!string.IsNullOrWhiteSpace(Model.NewsTitle))
+            {
+                <h5 class="text-muted fw-normal mb-4">@Model.NewsTitle</h5>
+            }
+
+            <div class="d-flex flex-wrap align-items-center gap-4 py-3 my-3 border-top border-bottom text-muted small">
+                <div>
+                    <i class="bi bi-person-fill text-primary me-1"></i>
+                    <strong>Author:</strong> @(Model.CreatedBy?.AccountName ?? "Campus Editor")
+                </div>
+                <div>
+                    <i class="bi bi-calendar-event text-primary me-1"></i>
+                    <strong>Published:</strong> @(Model.CreatedDate?.ToString("MMMM dd, yyyy HH:mm") ?? "N/A")
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.NewsSource))
+                {
+                    <div>
+                        <i class="bi bi-link-45deg text-primary me-1"></i>
+                        <strong>Source:</strong> @Model.NewsSource
+                    </div>
+                }
+                @if (Model.ModifiedDate.HasValue)
+                {
+                    <div>
+                        <i class="bi bi-pencil-square text-secondary me-1"></i>
+                        <strong>Last Updated:</strong> @Model.ModifiedDate.Value.ToString("MMMM dd, yyyy")
+                    </div>
+                }
+            </div>
+
+            <div class="news-content fs-5 lh-lg my-4 text-dark" style="white-space: pre-line;">
+                @Model.NewsContent
+            </div>
+
+            @if (Model.Tags != null && Model.Tags.Any())
+            {
+                <div class="mt-4 pt-3 border-top">
+                    <h6 class="fw-bold text-muted mb-2"><i class="bi bi-tags me-1"></i> Related Tags:</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var tag in Model.Tags)
+                        {
+                            <span class="badge-tag fs-6 px-3 py-1">
+                                #@tag.TagName
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (User.IsInRole("Staff") || User.IsInRole("Admin"))
+            {
+                <div class="mt-5 pt-3 border-top d-flex justify-content-end gap-2">
+                    <a asp-controller="NewsArticles" asp-action="Index" class="btn btn-outline-primary">
+                        <i class="bi bi-gear me-1"></i> Manage in Dashboard
+                    </a>
+                </div>
+            }
+        </article>
+    </div>
+</div>

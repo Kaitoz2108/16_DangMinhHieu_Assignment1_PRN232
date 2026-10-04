@@ -1,0 +1,100 @@
+@model List<BusinessObjects.Entities.NewsArticle>
+@{
+    ViewData["Title"] = "My Article History";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-clock-history text-primary me-2"></i>My Article History</h2>
+        <p class="text-muted small mb-0">List of all news articles published and created by your account</p>
+    </div>
+    <a asp-controller="NewsArticles" asp-action="Index" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Create New Article
+    </a>
+</div>
+
+<div class="card card-modern border-0">
+    <div class="table-responsive">
+        <table class="table table-modern mb-0">
+            <thead>
+                <tr>
+                    <th>Article ID</th>
+                    <th>Headline</th>
+                    <th>Category</th>
+                    <th>Created Date</th>
+                    <th>Status</th>
+                    <th>Tags</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-journal-x fs-1 d-block mb-2"></i>
+                            You haven't created any articles yet.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold text-muted">#@item.NewsArticleId</td>
+                            <td>
+                                <div class="fw-semibold text-dark">@item.Headline</div>
+                                @if (!string.IsNullOrWhiteSpace(item.NewsSource))
+                                {
+                                    <div class="small text-muted">Source: @item.NewsSource</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    @(item.Category?.CategoryName ?? "None")
+                                </span>
+                            </td>
+                            <td class="small text-muted">
+                                @(item.CreatedDate?.ToString("MMM dd, yyyy HH:mm") ?? "N/A")
+                            </td>
+                            <td>
+                                @if (item.NewsStatus == true)
+                                {
+                                    <span class="badge-status-active">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-status-inactive">Inactive</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.Tags != null && item.Tags.Any())
+                                {
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach (var tag in item.Tags)
+                                        {
+                                            <span class="badge-tag">#@tag.TagName</span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">None</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-controller="Home" asp-action="Details" asp-route-id="@item.NewsArticleId" class="btn btn-sm btn-outline-info" title="View Article">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a asp-controller="NewsArticles" asp-action="Index" class="btn btn-sm btn-outline-primary" title="Manage in News Articles">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

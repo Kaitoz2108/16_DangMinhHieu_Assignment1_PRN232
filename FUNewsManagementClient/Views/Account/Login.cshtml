@@ -1,0 +1,85 @@
+@model BusinessObjects.DTOs.LoginRequest
+@{
+    ViewData["Title"] = "Sign In";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+<div class="row justify-content-center my-5">
+    <div class="col-md-7 col-lg-5">
+        <div class="card card-modern shadow-lg border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex p-3 rounded-circle bg-primary-subtle text-primary mb-3">
+                        <i class="bi bi-shield-lock-fill fs-2"></i>
+                    </div>
+                    <h2 class="fw-bold">Sign In</h2>
+                    <p class="text-muted small">Access FUNewsManagement Portal with your credentials</p>
+                </div>
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger py-2 small" role="alert">
+                        <div asp-validation-summary="All" class="text-danger mb-0"></div>
+                    </div>
+                }
+
+                <form asp-action="Login" asp-route-returnUrl="@returnUrl" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label fw-semibold small text-muted">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+                            <input asp-for="Email" id="loginEmail" class="form-control" placeholder="name@FUNewsManagement.org" required />
+                        </div>
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Password" class="form-label fw-semibold small text-muted">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-key"></i></span>
+                            <input asp-for="Password" id="loginPassword" type="password" class="form-control" placeholder="••••••••" required />
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold mb-3">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                    </button>
+                </form>
+
+                <!-- Quick Fill Test Accounts for Easy Evaluation -->
+                <div class="mt-4 pt-3 border-top">
+                    <div class="small fw-bold text-muted mb-2 text-center text-uppercase" style="letter-spacing: 0.05em; font-size: 0.75rem;">
+                        Quick Credentials for Grading
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-danger text-start d-flex justify-content-between align-items-center" onclick="fillCreds('admin@FUNewsManagementSystem.org', '@@@@abc123@@@@')">
+                            <span><i class="bi bi-shield-shaded me-1"></i> Default Admin (appsettings)</span>
+                            <span class="badge bg-danger">Fill</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary text-start d-flex justify-content-between align-items-center" onclick="fillCreds('IsabellaDavid@FUNewsManagement.org', '@@1')">
+                            <span><i class="bi bi-person-badge me-1"></i> Staff (Role 1 - DB)</span>
+                            <span class="badge bg-primary">Fill</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info text-start d-flex justify-content-between align-items-center" onclick="fillCreds('EmmaWilliam@FUNewsManagement.org', '@@1')">
+                            <span><i class="bi bi-mortarboard me-1"></i> Lecturer (Role 2 - DB)</span>
+                            <span class="badge bg-info">Fill</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function fillCreds(email, password) {
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = password;
+        }
+    </script>
+}

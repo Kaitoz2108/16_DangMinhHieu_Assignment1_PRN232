@@ -1,0 +1,85 @@
+@model BusinessObjects.DTOs.ProfileUpdateRequest
+@{
+    ViewData["Title"] = "User Profile";
+    var role = ViewBag.AccountRole as string ?? "User";
+    var accountId = ViewBag.AccountId;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card card-modern shadow-sm">
+            <div class="card-header bg-white border-bottom p-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-primary-subtle text-primary rounded-circle">
+                        <i class="bi bi-person-badge fs-2"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-1">My Profile</h4>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-muted small">Account ID: <strong>#@accountId</strong></span>
+                            <span class="badge bg-primary rounded-pill">@role</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success small">
+                        <i class="bi bi-check-circle me-1"></i> @TempData["SuccessMessage"]
+                    </div>
+                }
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger small">
+                        <div asp-validation-summary="All" class="text-danger mb-0"></div>
+                    </div>
+                }
+
+                <form asp-action="Profile" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label asp-for="AccountName" class="form-label fw-semibold small text-muted">Full Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                            <input asp-for="AccountName" class="form-control" required />
+                        </div>
+                        <span asp-validation-for="AccountName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="AccountEmail" class="form-label fw-semibold small text-muted">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                            <input asp-for="AccountEmail" class="form-control" required />
+                        </div>
+                        <span asp-validation-for="AccountEmail" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="AccountPassword" class="form-label fw-semibold small text-muted">
+                            New Password <span class="text-muted fw-normal">(Leave blank to keep current)</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                            <input asp-for="AccountPassword" type="password" class="form-control" placeholder="Enter new password" />
+                        </div>
+                        <span asp-validation-for="AccountPassword" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Back
+                        </a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

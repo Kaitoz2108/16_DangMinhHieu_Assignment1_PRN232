@@ -1,0 +1,381 @@
+@model List<BusinessObjects.Entities.Category>
+@{
+    ViewData["Title"] = "Category Management";
+    string? searchKeyword = ViewBag.SearchKeyword;
+    var parentCategories = ViewBag.ParentCategories as List<BusinessObjects.Entities.Category> ?? new List<BusinessObjects.Entities.Category>();
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-tags text-primary me-2"></i>Category Management</h2>
+        <p class="text-muted small mb-0">Organize and structure news categories and subcategories</p>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+        <i class="bi bi-plus-circle me-1"></i> Create Category
+    </button>
+</div>
+
+<!-- Search Card -->
+<div class="card card-modern p-3 mb-4 border-0">
+    <form method="get" asp-action="Index" class="row g-2 align-items-center">
+        <div class="col-md-9">
+            <div class="input-group">
+                <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="search" value="@searchKeyword" class="form-control" placeholder="Search category by name or description..." />
+            </div>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100">Search</button>
+            @if (!string.IsNullOrEmpty(searchKeyword))
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary" title="Reset"><i class="bi bi-x-circle"></i></a>
+            }
+        </div>
+    </form>
+</div>
+
+<!-- Categories Table -->
+<div class="card card-modern border-0">
+    <div class="table-responsive">
+        <table class="table table-modern mb-0">
+            <thead>
+                <tr>
+                    <th>Category ID</th>
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th>Parent Category</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-tag fs-1 d-block mb-2"></i>
+                            No categories found.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var cat in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold text-muted">#@cat.CategoryId</td>
+                            <td class="fw-semibold text-dark">@cat.CategoryName</td>
+                            <td class="text-muted small" style="max-width: 320px;">
+                                @cat.CategoryDesciption
+                            </td>
+                            <td>
+                                @if (cat.ParentCategory != null)
+                                {
+                                    <span class="badge bg-light text-secondary border">
+                                        <i class="bi bi-diagram-2 me-1"></i> @cat.ParentCategory.CategoryName
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">None (Root)</span>
+                                }
+                            </td>
+                            <td>
+                                @if (cat.IsActive == true)
+                                {
+                                    <span class="badge-status-active">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-status-inactive">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal(@cat.CategoryId)">
+                                    <i class="bi bi-pencil-square me-1"></i> Edit
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteCategory(@cat.CategoryId, '@cat.CategoryName')">
+                                    <i class="bi bi-trash me-1"></i> Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- CREATE CATEGORY MODAL -->
+<div class="modal fade" id="createCategoryModal" tabindex="-1" aria-labelledby="createCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="createCategoryModalLabel">
+                    <i class="bi bi-plus-circle text-primary me-2"></i>Create New Category
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createCategoryForm" onsubmit="submitCreateCategory(event)">
+                <div class="modal-body p-4">
+                    <div id="createCategoryAlert" class="alert alert-danger d-none py-2 small"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" id="createCategoryName" class="form-control" placeholder="e.g. Technology News" required maxlength="100" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Description <span class="text-danger">*</span></label>
+                        <textarea id="createCategoryDesciption" class="form-control" rows="3" placeholder="Category overview..." required maxlength="250"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Parent Category</label>
+                        <select id="createParentCategoryId" class="form-select">
+                            <option value="">-- None (Top Level) --</option>
+                            @foreach (var parent in parentCategories)
+                            {
+                                <option value="@parent.CategoryId">@parent.CategoryName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="createIsActive" checked />
+                        <label class="form-check-label fw-semibold small" for="createIsActive">Active Category</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitCreateCategory">
+                        <i class="bi bi-check-circle me-1"></i> Save Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT CATEGORY MODAL -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="editCategoryModalLabel">
+                    <i class="bi bi-pencil-square text-primary me-2"></i>Edit Category
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editCategoryForm" onsubmit="submitEditCategory(event)">
+                <div class="modal-body p-4">
+                    <div id="editCategoryAlert" class="alert alert-danger d-none py-2 small"></div>
+                    <input type="hidden" id="editCategoryId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" id="editCategoryName" class="form-control" required maxlength="100" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Description <span class="text-danger">*</span></label>
+                        <textarea id="editCategoryDesciption" class="form-control" rows="3" required maxlength="250"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Parent Category</label>
+                        <select id="editParentCategoryId" class="form-select">
+                            <option value="">-- None (Top Level) --</option>
+                            @foreach (var parent in parentCategories)
+                            {
+                                <option value="@parent.CategoryId">@parent.CategoryName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="editIsActive" />
+                        <label class="form-check-label fw-semibold small" for="editIsActive">Active Category</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitEditCategory">
+                        <i class="bi bi-check-circle me-1"></i> Update Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const createCatModal = new bootstrap.Modal(document.getElementById('createCategoryModal'));
+        const editCatModal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+
+        function openCreateModal() {
+            document.getElementById('createCategoryForm').reset();
+            document.getElementById('createIsActive').checked = true;
+            $('#createCategoryAlert').addClass('d-none').text('');
+            createCatModal.show();
+        }
+
+        async function submitCreateCategory(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitCreateCategory');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+
+            const parentVal = document.getElementById('createParentCategoryId').value;
+            const payload = {
+                categoryName: document.getElementById('createCategoryName').value.trim(),
+                categoryDesciption: document.getElementById('createCategoryDesciption').value.trim(),
+                parentCategoryId: parentVal ? parseInt(parentVal) : null,
+                isActive: document.getElementById('createIsActive').checked
+            };
+
+            try {
+                const response = await fetch('/Categories/Create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    createCatModal.hide();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: result.message || 'Category created successfully!',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+                } else {
+                    $('#createCategoryAlert').removeClass('d-none').text(result.message || 'Failed to create category.');
+                }
+            } catch (err) {
+                $('#createCategoryAlert').removeClass('d-none').text('Error communicating with server.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Save Category';
+            }
+        }
+
+        async function openEditModal(id) {
+            $('#editCategoryAlert').addClass('d-none').text('');
+            try {
+                const res = await fetch(`/Categories/GetCategory?id=${id}`);
+                if (!res.ok) {
+                    Swal.fire('Error', 'Unable to fetch category details.', 'error');
+                    return;
+                }
+                const data = await res.json();
+                document.getElementById('editCategoryId').value = data.categoryId;
+                document.getElementById('editCategoryName').value = data.categoryName || '';
+                document.getElementById('editCategoryDesciption').value = data.categoryDesciption || '';
+                document.getElementById('editParentCategoryId').value = data.parentCategoryId || '';
+                document.getElementById('editIsActive').checked = data.isActive === true;
+
+                editCatModal.show();
+            } catch (err) {
+                Swal.fire('Error', 'Failed to load category.', 'error');
+            }
+        }
+
+        async function submitEditCategory(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitEditCategory');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating...';
+
+            const parentVal = document.getElementById('editParentCategoryId').value;
+            const payload = {
+                categoryId: parseInt(document.getElementById('editCategoryId').value),
+                categoryName: document.getElementById('editCategoryName').value.trim(),
+                categoryDesciption: document.getElementById('editCategoryDesciption').value.trim(),
+                parentCategoryId: parentVal ? parseInt(parentVal) : null,
+                isActive: document.getElementById('editIsActive').checked
+            };
+
+            try {
+                const response = await fetch('/Categories/Update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    editCatModal.hide();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated!',
+                        text: result.message || 'Category updated successfully!',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+                } else {
+                    $('#editCategoryAlert').removeClass('d-none').text(result.message || 'Failed to update category.');
+                }
+            } catch (err) {
+                $('#editCategoryAlert').removeClass('d-none').text('Error communicating with server.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Update Category';
+            }
+        }
+
+        function confirmDeleteCategory(id, name) {
+            Swal.fire({
+                title: 'Delete Category?',
+                text: `Are you sure you want to delete category "${name}" (ID #${id})?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, Delete',
+                cancelButtonText: 'Cancel'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`/Categories/Delete?id=${id}`, {
+                            method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': getAntiForgeryToken()
+                            }
+                        });
+
+                        const resJson = await response.json();
+                        if (response.ok && resJson.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: resJson.message || 'Category deleted successfully.',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => location.reload());
+                        } else {
+                            // Display delete restriction error message
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Cannot Delete Category',
+                                text: resJson.message || 'Cannot delete this category because it is associated with existing news articles.',
+                                confirmButtonColor: '#4f46e5'
+                            });
+                        }
+                    } catch (err) {
+                        Swal.fire('Error', 'Unable to complete deletion request.', 'error');
+                    }
+                }
+            });
+        }
+    </script>
+}
