@@ -27,6 +27,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("login")]
     [AllowAnonymous]
+    [Consumes("application/json")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
         if (!ModelState.IsValid)
