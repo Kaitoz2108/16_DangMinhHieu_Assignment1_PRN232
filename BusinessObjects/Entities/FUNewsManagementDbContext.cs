@@ -50,7 +50,9 @@ public partial class FUNewsManagementDbContext : DbContext
             entity.ToTable("Category");
 
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-            entity.Property(e => e.CategoryDesciption).HasMaxLength(250);
+            entity.Property(e => e.CategoryDesciption)
+                .HasColumnName("CategoryDescription")
+                .HasMaxLength(250);
             entity.Property(e => e.CategoryName).HasMaxLength(100);
             entity.Property(e => e.ParentCategoryId).HasColumnName("ParentCategoryID");
 

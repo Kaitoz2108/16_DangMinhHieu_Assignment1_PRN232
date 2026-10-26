@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BusinessObjects.Entities;
 
@@ -11,7 +12,15 @@ public partial class Category
 
     public string CategoryName { get; set; } = null!;
 
+    [Column("CategoryDescription")]
     public string CategoryDesciption { get; set; } = null!;
+
+    [NotMapped]
+    public string CategoryDescription
+    {
+        get => CategoryDesciption;
+        set => CategoryDesciption = value;
+    }
 
     public short? ParentCategoryId { get; set; }
 
