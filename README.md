@@ -2,20 +2,51 @@
 
 **Author:** Dang Minh Hieu  
 **Target Platform:** .NET 8.0 (C#) & MS SQL Server  
-**Architecture:** 3-Layer Architecture with Separate BackEnd and FrontEnd Solutions
+**Architecture:** 3-Layer Architecture with Master Solution containing BackEnd and FrontEnd Projects
 
 ---
 
 ## 1. Project Solutions Overview
 
-### A. BackEnd Solution: `16_DangMinhHieu_Assignment01_BackEnd.sln`
-- **`BusinessObjects`**: Entity Models (`Category`, `NewsArticle`, `SystemAccount`, `Tag`) and `FUNewsManagementDbContext` scaffolded from MS SQL Server with entity mapping intact (preserving `CategoryDesciption`).
-- **`DataAccessObjects`**: Thread-safe Singleton Pattern with lock (`CategoryDAO.Instance`, `NewsArticleDAO.Instance`, `SystemAccountDAO.Instance`, `TagDAO.Instance`).
-- **`Repositories`**: Repository Interfaces and Implementation classes encapsulating DAO methods (`ICategoryRepository`, `INewsArticleRepository`, `ISystemAccountRepository`, `ITagRepository`).
-- **`FUNewsManagementAPI`**: ASP.NET Core Web API with OData routing (`odata` prefix), `$filter`, `$select`, `$orderby`, `$expand`, `$count`, `$top`, JWT Bearer Authentication, and Swagger.
+The system is organized under a single master solution `16_DangMinhHieu_Assignment01.sln` containing **2 dedicated C# Projects**:
 
-### B. FrontEnd Solution: `16_DangMinhHieu_Assignment01_FrontEnd.sln`
-- **`FUNewsManagementClient`**: ASP.NET Core MVC interacting with the Web API via `HttpClient`, Bootstrap 5 modals, SweetAlert2 confirmation dialogs, and real-time form validation.
+```text
+16_DangMinhHieu_Assignment1_PRN232/
+│
+├── 16_DangMinhHieu_Assignment01.sln                         # Master Solution (chứa trực tiếp 2 Project BE & FE)
+├── 16_DangMinhHieu_Assignment01.slnLaunch.user              # Cấu hình F5 chạy đồng thời cả BE và FE
+├── README.md
+├── .gitignore
+│
+├── 16_DangMinhHieu_Assignment01_BackEnd/                   # BackEnd Project (.NET 8 Web API + OData)
+│   ├── 16_DangMinhHieu_Assignment01_BackEnd.csproj          # Project file
+│   ├── 16_DangMinhHieu_Assignment01_BackEnd.sln             # Standalone BE solution
+│   ├── Program.cs                                          # DI, OData EDM, JWT Bearer, DbContext configuration
+│   ├── appsettings.json                                    # Database Connection String & Admin Account
+│   ├── appsettings.Development.json
+│   ├── ODataQueryOptionsFilter.cs                          # Swagger OData query options filter
+│   ├── Properties/
+│   │   └── launchSettings.json                             # Runs at http://localhost:5173
+│   ├── Controllers/                                        # API Controllers (Auth, News, Categories, Accounts, Tags, Reports)
+│   ├── Entities/                                           # Entity Models (Category, NewsArticle, SystemAccount, Tag, FUNewsManagementDbContext)
+│   ├── DTOs/                                               # Data Transfer Objects
+│   ├── DAOs/                                               # Thread-safe Singleton DAOs (CategoryDAO, NewsArticleDAO, ...)
+│   └── Repositories/                                       # Repository pattern (ICategoryRepository, CategoryRepository, ...)
+│
+└── 16_DangMinhHieu_Assignment01_FrontEnd/                  # FrontEnd Project (.NET 8 ASP.NET Core MVC Client)
+    ├── 16_DangMinhHieu_Assignment01_FrontEnd.csproj         # References BackEnd Project
+    ├── 16_DangMinhHieu_Assignment01_FrontEnd.sln            # Standalone FE solution
+    ├── Program.cs                                          # MVC Pipeline, Session, Cookie Auth
+    ├── appsettings.json                                    # Web API BaseUrl: http://localhost:5173
+    ├── appsettings.Development.json
+    ├── Properties/
+    │   └── launchSettings.json                             # Runs at http://localhost:5076
+    ├── Controllers/                                        # MVC Controllers (Account, AdminAccounts, Categories, Home, NewsArticles, Reports)
+    ├── Models/                                             # ViewModels (ErrorViewModel)
+    ├── Services/                                           # ApiService & IApiService (HTTP calls with JWT injection)
+    ├── Views/                                              # Razor Views with Modals & SweetAlert2 confirmation
+    └── wwwroot/                                            # Static assets (Bootstrap 5, CSS, JS)
+```
 
 ---
 
@@ -32,17 +63,25 @@
 
 ## 3. How to Run
 
-### Option 1: Terminal / Command Line
+### Option 1: Visual Studio (Recommended)
+1. Open `16_DangMinhHieu_Assignment01.sln` in Visual Studio 2022.
+2. The multi-project launch profile (`16_DangMinhHieu_Assignment01.slnLaunch.user`) is pre-configured to start both **BackEnd** and **FrontEnd** automatically.
+3. Simply press **F5** or click **Start**.
+
+### Option 2: Terminal / Command Line
 1. **Start BackEnd Web API:**
    ```bash
-   dotnet run --project FUNewsManagementAPI/FUNewsManagementAPI.csproj --urls "http://localhost:5173"
+   cd 16_DangMinhHieu_Assignment01_BackEnd
+   dotnet run --urls "http://localhost:5173"
    ```
-2. **Start FrontEnd Client:**
-   ```bash
-   dotnet run --project FUNewsManagementClient/FUNewsManagementClient.csproj --urls "http://localhost:5076"
-   ```
-3. Open browser at: `http://localhost:5076`
+   - API Base URL: `http://localhost:5173`
+   - Swagger Documentation: `http://localhost:5173/swagger`
+   - OData Metadata Endpoint: `http://localhost:5173/odata/$metadata`
 
-### Option 2: Visual Studio
-1. Open `16_DangMinhHieu_Assignment01_BackEnd.sln` -> Set `FUNewsManagementAPI` as Startup Project -> Run (F5).
-2. Open `16_DangMinhHieu_Assignment01_FrontEnd.sln` -> Set `FUNewsManagementClient` as Startup Project -> Run (F5).
+2. **Start FrontEnd Client:**
+   Open a second terminal window:
+   ```bash
+   cd 16_DangMinhHieu_Assignment01_FrontEnd
+   dotnet run --urls "http://localhost:5076"
+   ```
+   - FrontEnd URL: `http://localhost:5076`

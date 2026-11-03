@@ -1,13 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <ItemGroup>
-    <ProjectReference Include="..\BusinessObjects\BusinessObjects.csproj" />
-  </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FUNewsManagementClient</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\16_DangMinhHieu_Assignment01_BackEnd\16_DangMinhHieu_Assignment01_BackEnd.csproj" />
+  </ItemGroup>
+
 </Project>
+

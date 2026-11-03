@@ -1,0 +1,16 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "16_DangMinhHieu_Assignment01_BackEnd\\16_DangMinhHieu_Assignment01_BackEnd.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "16_DangMinhHieu_Assignment01_FrontEnd\\16_DangMinhHieu_Assignment01_FrontEnd.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
+
