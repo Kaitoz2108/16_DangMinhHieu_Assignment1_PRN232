@@ -1,14 +1,11 @@
 using System;
-using System.Text;
 using System.Text.Json.Serialization;
 using BusinessObjects.Entities;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OpenApi.Models;
@@ -24,6 +21,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? builder.Configuration.GetConnectionString("FUNewsManagement");
 builder.Services.AddDbContext<FUNewsManagementDbContext>(options =>
     options.UseSqlServer(connectionString));
+
 // Register Repositories (NO DbContext or DAO in Controllers)
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<INewsArticleRepository, NewsArticleRepository>();
@@ -42,40 +40,6 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
-
-// Configure JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKeyForFUNewsManagementSystemPRN232Assignment1DangMinhHieu2026!";
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "FUNewsManagementAPI";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "FUNewsManagementClient";
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtIssuer,
-        ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-        ClockSkew = TimeSpan.Zero
-    };
-});
-
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("StaffOnly", policy => policy.RequireRole("Staff"));
-    options.AddPolicy("StaffOrAdmin", policy => policy.RequireRole("Staff", "Admin"));
-});
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -98,30 +62,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "ASP.NET Core Web API with OData integration for PRN232 FUNewsManagementSystem"
     });
 
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-
     c.OperationFilter<ODataQueryOptionsFilter>();
     c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 });
@@ -137,7 +77,6 @@ app.UseSwaggerUI(c =>
 
 app.UseCors("AllowAll");
 
-app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

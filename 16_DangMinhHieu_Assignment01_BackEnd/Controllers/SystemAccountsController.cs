@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using BusinessObjects.Entities;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -9,7 +8,6 @@ using Repositories;
 
 namespace FUNewsManagementAPI.Controllers;
 
-[Authorize(Roles = "Admin")]
 public class SystemAccountsController : ODataController
 {
     private readonly ISystemAccountRepository _accountRepository;

@@ -1,5 +1,4 @@
 using System;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repositories;
 
@@ -7,7 +6,6 @@ namespace FUNewsManagementAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
 public class ReportsController : ControllerBase
 {
     private readonly INewsArticleRepository _newsArticleRepository;

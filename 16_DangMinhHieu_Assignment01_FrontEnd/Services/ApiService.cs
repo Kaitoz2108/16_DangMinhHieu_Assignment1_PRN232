@@ -36,17 +36,7 @@ public class ApiService : IApiService
 
     private void AddAuthorizationHeader()
     {
-        var token = _httpContextAccessor.HttpContext?.Session.GetString("JWToken")
-            ?? _httpContextAccessor.HttpContext?.User.FindFirst("JWToken")?.Value;
-
-        if (!string.IsNullOrEmpty(token))
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        }
-        else
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = null;
-        }
+        // JWT removed: Web API endpoints are accessed directly from MVC Client
     }
 
     private async Task<T?> ReadJsonSafeAsync<T>(HttpContent content)
@@ -111,10 +101,13 @@ public class ApiService : IApiService
 
     public async Task<(bool Success, SystemAccountDto? Data, string? ErrorMessage)> GetProfileAsync()
     {
-        AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.GetAsync("api/Auth/profile");
+            var accountIdStr = _httpContextAccessor.HttpContext?.Session.GetString("AccountId")
+                ?? _httpContextAccessor.HttpContext?.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            var url = string.IsNullOrEmpty(accountIdStr) ? "api/Auth/profile" : $"api/Auth/profile?accountId={accountIdStr}";
+            var response = await _httpClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 var data = await ReadJsonSafeAsync<SystemAccountDto>(response.Content);
@@ -130,10 +123,13 @@ public class ApiService : IApiService
 
     public async Task<(bool Success, string? ErrorMessage)> UpdateProfileAsync(ProfileUpdateRequest request)
     {
-        AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.PutAsJsonAsync("api/Auth/profile", request);
+            var accountIdStr = _httpContextAccessor.HttpContext?.Session.GetString("AccountId")
+                ?? _httpContextAccessor.HttpContext?.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            var url = string.IsNullOrEmpty(accountIdStr) ? "api/Auth/profile" : $"api/Auth/profile?accountId={accountIdStr}";
+            var response = await _httpClient.PutAsJsonAsync(url, request);
             if (response.IsSuccessStatusCode)
             {
                 return (true, null);
@@ -437,10 +433,13 @@ public class ApiService : IApiService
 
     public async Task<List<NewsArticle>> GetMyHistoryAsync()
     {
-        AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.GetAsync("api/NewsArticles/history");
+            var accountIdStr = _httpContextAccessor.HttpContext?.Session.GetString("AccountId")
+                ?? _httpContextAccessor.HttpContext?.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            var url = string.IsNullOrEmpty(accountIdStr) ? "api/NewsArticles/history" : $"api/NewsArticles/creator/{accountIdStr}";
+            var response = await _httpClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();

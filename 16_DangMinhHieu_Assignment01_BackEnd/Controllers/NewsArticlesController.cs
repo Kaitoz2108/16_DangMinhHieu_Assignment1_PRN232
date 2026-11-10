@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using BusinessObjects.DTOs;
 using BusinessObjects.Entities;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -25,20 +23,14 @@ public class NewsArticlesController : ODataController
 
     [EnableQuery]
     [HttpGet]
-    [AllowAnonymous]
     public IActionResult Get()
     {
-        // Guest (No login): Can view active news articles (NewsStatus == true / 1)
-        bool isAuthenticated = User.Identity?.IsAuthenticated == true;
-        bool isStaffOrAdmin = isAuthenticated && (User.IsInRole("Staff") || User.IsInRole("Admin"));
-
-        var articles = _newsArticleRepository.GetAll(includeInactive: isStaffOrAdmin).AsQueryable();
+        var articles = _newsArticleRepository.GetAll(includeInactive: true).AsQueryable();
         return Ok(articles);
     }
 
     [EnableQuery]
     [HttpGet]
-    [AllowAnonymous]
     public IActionResult Get([FromRoute] string key)
     {
         var article = _newsArticleRepository.GetById(key);
@@ -47,32 +39,15 @@ public class NewsArticlesController : ODataController
             return NotFound($"News article with ID {key} not found.");
         }
 
-        bool isAuthenticated = User.Identity?.IsAuthenticated == true;
-        bool isStaffOrAdmin = isAuthenticated && (User.IsInRole("Staff") || User.IsInRole("Admin"));
-
-        // If inactive and not staff/admin, return NotFound
-        if (article.NewsStatus != true && !isStaffOrAdmin)
-        {
-            return NotFound($"News article with ID {key} not found or inactive.");
-        }
-
         return Ok(article);
     }
 
-    [Authorize(Roles = "Staff,Admin")]
     [HttpPost]
     public IActionResult Post([FromBody] NewsArticleDto dto)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
-        }
-
-        short? currentUserId = null;
-        var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (short.TryParse(idClaim, out var parsedId) && parsedId > 0)
-        {
-            currentUserId = parsedId;
         }
 
         var article = new NewsArticle
@@ -85,7 +60,7 @@ public class NewsArticlesController : ODataController
             NewsSource = dto.NewsSource,
             CategoryId = dto.CategoryId,
             NewsStatus = dto.NewsStatus ?? true,
-            CreatedById = dto.CreatedById ?? currentUserId,
+            CreatedById = dto.CreatedById,
             UpdatedById = null,
             ModifiedDate = null
         };
@@ -101,20 +76,12 @@ public class NewsArticlesController : ODataController
         }
     }
 
-    [Authorize(Roles = "Staff,Admin")]
     [HttpPut]
     public IActionResult Put([FromRoute] string key, [FromBody] NewsArticleDto dto)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
-        }
-
-        short? currentUserId = null;
-        var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (short.TryParse(idClaim, out var parsedId) && parsedId > 0)
-        {
-            currentUserId = parsedId;
         }
 
         var article = new NewsArticle
@@ -126,7 +93,7 @@ public class NewsArticlesController : ODataController
             NewsSource = dto.NewsSource,
             CategoryId = dto.CategoryId,
             NewsStatus = dto.NewsStatus,
-            UpdatedById = currentUserId ?? dto.UpdatedById,
+            UpdatedById = dto.UpdatedById,
             ModifiedDate = DateTime.Now
         };
 
@@ -145,7 +112,6 @@ public class NewsArticlesController : ODataController
         }
     }
 
-    [Authorize(Roles = "Staff,Admin")]
     [HttpDelete]
     public IActionResult Delete([FromRoute] string key)
     {
@@ -158,21 +124,18 @@ public class NewsArticlesController : ODataController
         return NoContent();
     }
 
-    [Authorize(Roles = "Staff,Admin")]
     [HttpGet("api/NewsArticles/history")]
-    public IActionResult GetMyHistory()
+    public IActionResult GetMyHistory([FromQuery] short? accountId)
     {
-        var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(idClaim) || !short.TryParse(idClaim, out var accountId))
+        if (!accountId.HasValue || accountId.Value <= 0)
         {
-            return Unauthorized();
+            return BadRequest(new { message = "Account ID is required." });
         }
 
-        var articles = _newsArticleRepository.GetByCreator(accountId);
+        var articles = _newsArticleRepository.GetByCreator(accountId.Value);
         return Ok(articles);
     }
 
-    [Authorize(Roles = "Staff,Admin")]
     [HttpGet("api/NewsArticles/creator/{accountId}")]
     public IActionResult GetByCreator([FromRoute] short accountId)
     {
@@ -180,7 +143,6 @@ public class NewsArticlesController : ODataController
         return Ok(articles);
     }
 
-    [Authorize(Roles = "Admin")]
     [HttpGet("api/NewsArticles/report")]
     public IActionResult GetReport([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
     {

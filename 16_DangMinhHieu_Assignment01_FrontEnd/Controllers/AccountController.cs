@@ -51,7 +51,6 @@ public class AccountController : Controller
             return View(model);
         }
 
-        HttpContext.Session.SetString("JWToken", data.Token);
         HttpContext.Session.SetString("UserRole", data.Role);
         HttpContext.Session.SetString("UserName", data.AccountName);
         HttpContext.Session.SetString("AccountId", data.AccountId.ToString());
@@ -61,8 +60,7 @@ public class AccountController : Controller
             new Claim(ClaimTypes.NameIdentifier, data.AccountId.ToString()),
             new Claim(ClaimTypes.Name, data.AccountName),
             new Claim(ClaimTypes.Email, data.AccountEmail),
-            new Claim(ClaimTypes.Role, data.Role),
-            new Claim("JWToken", data.Token)
+            new Claim(ClaimTypes.Role, data.Role)
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

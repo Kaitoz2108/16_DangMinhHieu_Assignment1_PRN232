@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using BusinessObjects.Entities;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -20,7 +19,6 @@ public class TagsController : ODataController
 
     [EnableQuery]
     [HttpGet]
-    [AllowAnonymous]
     public IActionResult Get()
     {
         var tags = _tagRepository.GetAll().AsQueryable();
@@ -29,7 +27,6 @@ public class TagsController : ODataController
 
     [EnableQuery]
     [HttpGet]
-    [AllowAnonymous]
     public IActionResult Get([FromRoute] int key)
     {
         var tag = _tagRepository.GetById(key);
@@ -40,7 +37,6 @@ public class TagsController : ODataController
         return Ok(tag);
     }
 
-    [Authorize(Roles = "Staff,Admin")]
     [HttpPost]
     public IActionResult Post([FromBody] Tag tag)
     {
@@ -60,7 +56,6 @@ public class TagsController : ODataController
         }
     }
 
-    [Authorize(Roles = "Staff,Admin")]
     [HttpPut]
     public IActionResult Put([FromRoute] int key, [FromBody] Tag tag)
     {
@@ -89,7 +84,6 @@ public class TagsController : ODataController
         }
     }
 
-    [Authorize(Roles = "Staff,Admin")]
     [HttpDelete]
     public IActionResult Delete([FromRoute] int key)
     {

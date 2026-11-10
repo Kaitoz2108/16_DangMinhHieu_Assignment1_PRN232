@@ -20,8 +20,7 @@ The system is organized under a single master solution `16_DangMinhHieu_Assignme
 │
 ├── 16_DangMinhHieu_Assignment01_BackEnd/                   # BackEnd Project (.NET 8 Web API + OData)
 │   ├── 16_DangMinhHieu_Assignment01_BackEnd.csproj          # Project file
-│   ├── 16_DangMinhHieu_Assignment01_BackEnd.sln             # Standalone BE solution
-│   ├── Program.cs                                          # DI, OData EDM, JWT Bearer, DbContext configuration
+│   ├── Program.cs                                          # DI, OData EDM, DbContext configuration
 │   ├── appsettings.json                                    # Database Connection String & Admin Account
 │   ├── appsettings.Development.json
 │   ├── ODataQueryOptionsFilter.cs                          # Swagger OData query options filter
@@ -35,7 +34,6 @@ The system is organized under a single master solution `16_DangMinhHieu_Assignme
 │
 └── 16_DangMinhHieu_Assignment01_FrontEnd/                  # FrontEnd Project (.NET 8 ASP.NET Core MVC Client)
     ├── 16_DangMinhHieu_Assignment01_FrontEnd.csproj         # References BackEnd Project
-    ├── 16_DangMinhHieu_Assignment01_FrontEnd.sln            # Standalone FE solution
     ├── Program.cs                                          # MVC Pipeline, Session, Cookie Auth
     ├── appsettings.json                                    # Web API BaseUrl: http://localhost:5173
     ├── appsettings.Development.json
@@ -43,7 +41,7 @@ The system is organized under a single master solution `16_DangMinhHieu_Assignme
     │   └── launchSettings.json                             # Runs at http://localhost:5076
     ├── Controllers/                                        # MVC Controllers (Account, AdminAccounts, Categories, Home, NewsArticles, Reports)
     ├── Models/                                             # ViewModels (ErrorViewModel)
-    ├── Services/                                           # ApiService & IApiService (HTTP calls with JWT injection)
+    ├── Services/                                           # ApiService & IApiService (HTTP calls to BackEnd)
     ├── Views/                                              # Razor Views with Modals & SweetAlert2 confirmation
     └── wwwroot/                                            # Static assets (Bootstrap 5, CSS, JS)
 ```

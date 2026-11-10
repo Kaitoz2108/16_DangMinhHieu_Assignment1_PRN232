@@ -19,6 +19,7 @@ public class HomeController : Controller
     public async Task<IActionResult> Index(string? search, short? categoryId)
     {
         var articles = await _apiService.GetNewsArticlesAsync("$expand=Category,CreatedBy,Tags&$orderby=CreatedDate desc");
+        articles = articles.Where(a => a.NewsStatus == true).ToList();
         var categories = await _apiService.GetCategoriesAsync("$filter=IsActive eq true");
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -54,7 +55,7 @@ public class HomeController : Controller
         }
 
         var article = await _apiService.GetNewsArticleByIdAsync(id);
-        if (article == null)
+        if (article == null || article.NewsStatus != true)
         {
             return NotFound();
         }

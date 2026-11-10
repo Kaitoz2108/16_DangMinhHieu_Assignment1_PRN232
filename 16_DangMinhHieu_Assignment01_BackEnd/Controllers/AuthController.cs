@@ -1,13 +1,8 @@
 using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using BusinessObjects.DTOs;
 using BusinessObjects.Entities;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using Repositories;
 
 namespace FUNewsManagementAPI.Controllers;
@@ -26,7 +21,6 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    [AllowAnonymous]
     [Consumes("application/json")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
@@ -43,10 +37,9 @@ public class AuthController : ControllerBase
         if (string.Equals(request.Email.Trim(), adminEmail.Trim(), StringComparison.OrdinalIgnoreCase) &&
             (request.Password == adminPassword || request.Password == "@@abc123@@" || request.Password == "@abc123@"))
         {
-            var token = GenerateJwtToken(0, "Administrator", adminEmail, adminRole);
             return Ok(new LoginResponse
             {
-                Token = token,
+                Token = string.Empty,
                 AccountId = 0,
                 AccountName = "Administrator",
                 AccountEmail = adminEmail,
@@ -68,11 +61,9 @@ public class AuthController : ControllerBase
             _ => "User"
         };
 
-        var dbToken = GenerateJwtToken(account.AccountId, account.AccountName ?? "User", account.AccountEmail ?? "", role);
-
         return Ok(new LoginResponse
         {
-            Token = dbToken,
+            Token = string.Empty,
             AccountId = account.AccountId,
             AccountName = account.AccountName ?? "User",
             AccountEmail = account.AccountEmail ?? "",
@@ -81,72 +72,59 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("profile")]
-    [Authorize]
-    public IActionResult GetProfile()
+    public IActionResult GetProfile([FromQuery] short? accountId)
     {
-        var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
-
-        if (string.IsNullOrEmpty(idClaim))
+        if (!accountId.HasValue)
         {
-            return Unauthorized();
+            return BadRequest(new { message = "Account ID is required." });
         }
 
-        if (short.TryParse(idClaim, out var accountId))
+        if (accountId.Value == 0)
         {
-            if (accountId == 0 && roleClaim == "Admin")
-            {
-                var adminEmail = _configuration["AdminAccount:Email"] ?? "admin@FUNewsManagementSystem.org";
-                return Ok(new SystemAccountDto
-                {
-                    AccountId = 0,
-                    AccountName = "Administrator",
-                    AccountEmail = adminEmail,
-                    AccountRole = 0
-                });
-            }
-
-            var account = _accountRepository.GetById(accountId);
-            if (account == null)
-            {
-                return NotFound(new { message = "Account profile not found." });
-            }
-
+            var adminEmail = _configuration["AdminAccount:Email"] ?? "admin@FUNewsManagementSystem.org";
             return Ok(new SystemAccountDto
             {
-                AccountId = account.AccountId,
-                AccountName = account.AccountName,
-                AccountEmail = account.AccountEmail,
-                AccountRole = account.AccountRole
+                AccountId = 0,
+                AccountName = "Administrator",
+                AccountEmail = adminEmail,
+                AccountRole = 0
             });
         }
 
-        return BadRequest(new { message = "Invalid account identifier." });
+        var account = _accountRepository.GetById(accountId.Value);
+        if (account == null)
+        {
+            return NotFound(new { message = "Account profile not found." });
+        }
+
+        return Ok(new SystemAccountDto
+        {
+            AccountId = account.AccountId,
+            AccountName = account.AccountName,
+            AccountEmail = account.AccountEmail,
+            AccountRole = account.AccountRole
+        });
     }
 
     [HttpPut("profile")]
-    [Authorize]
-    public IActionResult UpdateProfile([FromBody] ProfileUpdateRequest request)
+    public IActionResult UpdateProfile([FromBody] ProfileUpdateRequest request, [FromQuery] short? accountId)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
-
-        if (string.IsNullOrEmpty(idClaim) || !short.TryParse(idClaim, out var accountId))
+        if (!accountId.HasValue)
         {
-            return Unauthorized();
+            return BadRequest(new { message = "Account ID is required." });
         }
 
-        if (accountId == 0 && roleClaim == "Admin")
+        if (accountId.Value == 0)
         {
             return BadRequest(new { message = "Default Admin account is configured via appsettings.json and cannot be edited in database." });
         }
 
-        var existing = _accountRepository.GetById(accountId);
+        var existing = _accountRepository.GetById(accountId.Value);
         if (existing == null)
         {
             return NotFound(new { message = "Account not found." });
@@ -168,36 +146,5 @@ public class AuthController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
-    }
-
-    private string GenerateJwtToken(short accountId, string name, string email, string role)
-    {
-        var keyStr = _configuration["Jwt:Key"] ?? "SuperSecretKeyForFUNewsManagementSystemPRN232Assignment1DangMinhHieu2026!";
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyStr));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, accountId.ToString()),
-            new Claim(ClaimTypes.Name, name),
-            new Claim(ClaimTypes.Email, email),
-            new Claim(ClaimTypes.Role, role)
-        };
-
-        var expireHours = 24;
-        if (int.TryParse(_configuration["Jwt:ExpireHours"], out var h))
-        {
-            expireHours = h;
-        }
-
-        var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"] ?? "FUNewsManagementAPI",
-            audience: _configuration["Jwt:Audience"] ?? "FUNewsManagementClient",
-            claims: claims,
-            expires: DateTime.UtcNow.AddHours(expireHours),
-            signingCredentials: creds
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

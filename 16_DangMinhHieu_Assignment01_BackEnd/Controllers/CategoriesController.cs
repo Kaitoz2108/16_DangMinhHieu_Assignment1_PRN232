@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using BusinessObjects.Entities;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -38,7 +37,6 @@ public class CategoriesController : ODataController
         return Ok(category);
     }
 
-    [Authorize(Roles = "Staff,Admin")]
     [HttpPost]
     public IActionResult Post([FromBody] Category category)
     {
@@ -58,7 +56,6 @@ public class CategoriesController : ODataController
         }
     }
 
-    [Authorize(Roles = "Staff,Admin")]
     [HttpPut]
     public IActionResult Put([FromRoute] short key, [FromBody] Category category)
     {
@@ -87,7 +84,6 @@ public class CategoriesController : ODataController
         }
     }
 
-    [Authorize(Roles = "Staff,Admin")]
     [HttpDelete]
     public IActionResult Delete([FromRoute] short key)
     {
