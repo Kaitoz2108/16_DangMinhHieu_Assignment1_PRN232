@@ -19,8 +19,11 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Register DbContext with Connection String
-builder.Services.AddDbContext<FUNewsManagementDbContext>(
-    opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration.GetConnectionString("MyCnn")
+    ?? builder.Configuration.GetConnectionString("FUNewsManagement");
+builder.Services.AddDbContext<FUNewsManagementDbContext>(options =>
+    options.UseSqlServer(connectionString));
 // Register Repositories (NO DbContext or DAO in Controllers)
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<INewsArticleRepository, NewsArticleRepository>();

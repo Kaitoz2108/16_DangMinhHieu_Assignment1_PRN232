@@ -17,7 +17,24 @@ public partial class FUNewsManagementDbContext : DbContext
     {
     }
 
-  
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            var basePath = Directory.GetCurrentDirectory();
+            var config = new ConfigurationBuilder()
+                .SetBasePath(basePath)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .Build();
+
+            var connectionString = config.GetConnectionString("DefaultConnection")
+                ?? config.GetConnectionString("MyCnn")
+                ?? config.GetConnectionString("FUNewsManagement")
+                ?? "Server=.\\SQLEXPRESS;Database=FUNewsManagement;Trusted_Connection=True;TrustServerCertificate=True;";
+
+            optionsBuilder.UseSqlServer(connectionString);
+        }
+    }
 
     public virtual DbSet<Category> Categories { get; set; }
 
